@@ -35,7 +35,11 @@ class _LoginViewState extends State<LoginView> {
       senha: _senha.text,
     );
     if (!mounted || !ok) return;
-    Navigator.pushNamedAndRemoveUntil(context, 'meus_rateios', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      'meus_rateios',
+      (route) => false,
+    );
   }
 
   @override
@@ -56,16 +60,17 @@ class _LoginViewState extends State<LoginView> {
                       const Align(child: AppLogo()),
                       const SizedBox(height: 22),
                       Text(
-                        'Rateio de Viagem',
+                        'RatAPP',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
                               fontWeight: FontWeight.w900,
                               letterSpacing: -1,
                             ),
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Organize o planejamento, os participantes e os pagamentos do seu grupo.',
+                        'Faça o rateio das sua viagens, organizando os valores, os participantes e os pagamentos de forma simples e prática.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.muted, height: 1.4),
                       ),
@@ -90,9 +95,12 @@ class _LoginViewState extends State<LoginView> {
                           labelText: 'Senha',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
-                            onPressed: () => setState(() => _ocultarSenha = !_ocultarSenha),
+                            onPressed: () =>
+                                setState(() => _ocultarSenha = !_ocultarSenha),
                             icon: Icon(
-                              _ocultarSenha ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              _ocultarSenha
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
                             ),
                           ),
                         ),
@@ -100,7 +108,8 @@ class _LoginViewState extends State<LoginView> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () => Navigator.pushNamed(context, 'recuperar_senha'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, 'recuperar_senha'),
                           child: const Text('Esqueceu a senha?'),
                         ),
                       ),
@@ -117,7 +126,9 @@ class _LoginViewState extends State<LoginView> {
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('ENTRAR'),
                       ),
@@ -125,7 +136,10 @@ class _LoginViewState extends State<LoginView> {
                       OutlinedButton(
                         onPressed: _controller.carregando
                             ? null
-                            : () => Navigator.pushNamed(context, 'cadastro_usuario'),
+                            : () => Navigator.pushNamed(
+                                context,
+                                'cadastro_usuario',
+                              ),
                         child: const Text('CRIAR CONTA'),
                       ),
                       const SizedBox(height: 22),
@@ -144,7 +158,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                             SizedBox(height: 6),
                             Text(
-                              'A autenticação está mockada e preparada para ser substituída pelo Firebase quando as credenciais forem fornecidas.',
+                              'A autenticação está mockada, pensando em uma api de autenticação futura. Para acessar a aplicação, utilize o e-mail e senha acima.',
                               style: TextStyle(
                                 color: AppTheme.muted,
                                 fontSize: 12,

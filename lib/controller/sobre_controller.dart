@@ -6,9 +6,8 @@ class SobreController extends ChangeNotifier {
   String get objetivo =>
       'Organizar rateios de viagens e apartamentos, distribuindo valores entre participantes e acompanhando pagamentos ao longo dos meses.';
 
-  // Preencha antes da entrega final.
   List<String> get integrantes => const <String>[
-        'Nome do integrante 1',
-        'Nome do integrante 2',
-      ];
+    'Bruno Garcia Gorjon',
+    'Victor Fernando Ferreira da Cruz',
+  ];
 }

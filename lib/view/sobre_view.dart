@@ -34,8 +34,8 @@ class _SobreViewState extends State<SobreView> {
             _controller.nomeApp,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+              fontWeight: FontWeight.w900,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -48,9 +48,15 @@ class _SobreViewState extends State<SobreView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Objetivo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                const Text(
+                  'Objetivo',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                ),
                 const SizedBox(height: 8),
-                Text(_controller.objetivo, style: const TextStyle(color: AppTheme.muted, height: 1.45)),
+                Text(
+                  _controller.objetivo,
+                  style: const TextStyle(color: AppTheme.muted, height: 1.45),
+                ),
               ],
             ),
           ),
@@ -59,14 +65,21 @@ class _SobreViewState extends State<SobreView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Equipe de desenvolvimento', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                const Text(
+                  'Equipe de desenvolvimento',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                ),
                 const SizedBox(height: 10),
                 ..._controller.integrantes.map(
                   (nome) => Padding(
                     padding: const EdgeInsets.only(bottom: 7),
                     child: Row(
                       children: <Widget>[
-                        const Icon(Icons.person_outline, size: 18, color: AppTheme.primary),
+                        const Icon(
+                          Icons.person_outline,
+                          size: 18,
+                          color: AppTheme.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(child: Text(nome)),
                       ],
@@ -81,10 +94,13 @@ class _SobreViewState extends State<SobreView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Projeto acadêmico', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                Text(
+                  'Projeto acadêmico',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                ),
                 SizedBox(height: 8),
                 Text(
-                  'Aplicativo multiplataforma desenvolvido em Flutter/Dart. Preencha disciplina, instituição e professor antes da entrega final.',
+                  'Aplicativo multiplataforma desenvolvido em Flutter/Dart como requisito para conclusão da disciplina de Desenvolvimento de Aplicativos Móveis da Faculdade de Tecnologia de Ribeirão Preto',
                   style: TextStyle(color: AppTheme.muted, height: 1.45),
                 ),
               ],

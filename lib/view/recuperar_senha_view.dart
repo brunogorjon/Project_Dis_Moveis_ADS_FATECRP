@@ -43,12 +43,17 @@ class _RecuperarSenhaViewState extends State<RecuperarSenhaView> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      const Icon(Icons.mark_email_read_outlined, size: 62, color: AppTheme.primary),
+                      const Icon(
+                        Icons.mark_email_read_outlined,
+                        size: 62,
+                        color: AppTheme.primary,
+                      ),
                       const SizedBox(height: 18),
                       Text(
                         'Esqueceu sua senha?',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
                               fontWeight: FontWeight.w900,
                             ),
                       ),
@@ -81,11 +86,14 @@ class _RecuperarSenhaViewState extends State<RecuperarSenhaView> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Icon(Icons.check_circle_outline, color: AppTheme.success),
+                              Icon(
+                                Icons.check_circle_outline,
+                                color: AppTheme.success,
+                              ),
                               SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Solicitação validada. No Firebase, este ponto chamará o envio real do e-mail de recuperação.',
+                                  'Solicitação validada. Será enviado um e-mail com instruções para redefinir sua senha.',
                                   style: TextStyle(color: AppTheme.success),
                                 ),
                               ),
@@ -100,7 +108,9 @@ class _RecuperarSenhaViewState extends State<RecuperarSenhaView> {
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('SOLICITAR RECUPERAÇÃO'),
                       ),
