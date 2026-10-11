@@ -4,7 +4,7 @@ Aplicativo Flutter/Dart adaptado do protótipo web `rateio_apartamento-main` e e
 
 ## Estado atual
 
-Nesta etapa o projeto está focado em **front-end, navegação, ChangeNotifier e regras de negócio**. O Supabase do protótipo web não foi levado para o Flutter, porque a autenticação final será integrada ao Firebase quando as credenciais/configuração forem fornecidas pelo professor.
+Nesta etapa o projeto está focado em **front-end, navegação, ChangeNotifier e regras de negócio**.
 
 A camada de autenticação já está isolada por uma interface (`AuthService`). Hoje ela usa `MockAuthService`; depois pode ser trocada por `FirebaseAuthService` sem reescrever as telas.
 
@@ -49,7 +49,7 @@ Menu geral
 5. Registro e histórico de pagamentos (`pagamentos_view.dart` e `registrar_pagamento_view.dart`).
 6. Acompanhamento individual (`participante_detalhes_view.dart`).
 
-## Regras de negócio preservadas do projeto JS
+## Regras de negócio
 
 - Valores monetários são tratados em **centavos (`int`)**, evitando erros de ponto flutuante.
 - A cota total é dividida entre os participantes ativos e eventuais centavos restantes são distribuídos deterministicamente.
@@ -96,7 +96,7 @@ Service
 Mock atual / Firebase futuramente
 ```
 
-Para integrar o Firebase posteriormente, a ideia é criar uma implementação de `AuthService` usando `FirebaseAuth`, configurar o projeto com as credenciais do professor e trocar a instância criada em `main.dart`.
+Para integrar o Firebase posteriormente, a ideia é criar uma implementação de `AuthService` usando `FirebaseAuth`, configurar o projeto com as credenciais e trocar a instância criada em `main.dart`.
 
 Os dados dos rateios também estão abstraídos por `RateioService`, permitindo migrar o mock para Firestore/Realtime Database posteriormente sem mover a regra de cálculo para o backend.
 
