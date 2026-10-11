@@ -115,10 +115,3 @@ lib/
 └── main.dart
 ```
 
-## Antes da entrega final
-
-- Substituir os nomes genéricos da equipe em `lib/controller/sobre_controller.dart`.
-- Preencher instituição, disciplina e professor na tela Sobre, se desejado.
-- Inserir a configuração Firebase fornecida pelo professor.
-- Executar `flutter pub get` e `flutter analyze` no ambiente Flutter da equipe.
-- Testar Android/Web conforme os dispositivos que serão demonstrados no vídeo.
