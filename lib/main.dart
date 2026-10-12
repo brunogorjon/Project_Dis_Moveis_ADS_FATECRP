@@ -61,7 +61,9 @@ class MainApp extends StatelessWidget {
           'sobre': (context) => const SobreView(),
         },
         onUnknownRoute: (settings) {
-          return MaterialPageRoute<void>(builder: (context) => const LoginView());
+          return MaterialPageRoute<void>(
+            builder: (context) => const LoginView(),
+          );
         },
       ),
     );

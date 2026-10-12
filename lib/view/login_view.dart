@@ -16,6 +16,7 @@ class LoginView extends StatefulWidget {
 class _LoginViewState extends State<LoginView> {
   final _email = TextEditingController();
   final _senha = TextEditingController();
+  final _senhaFocusNode = FocusNode();
   final _controller = LoginController();
   bool _ocultarSenha = true;
 
@@ -23,8 +24,20 @@ class _LoginViewState extends State<LoginView> {
   void dispose() {
     _email.dispose();
     _senha.dispose();
+    _senhaFocusNode.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _alternarVisibilidadeSenha() {
+    final manterFoco = _senhaFocusNode.hasFocus;
+    setState(() => _ocultarSenha = !_ocultarSenha);
+
+    if (manterFoco) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _senhaFocusNode.requestFocus();
+      });
+    }
   }
 
   Future<void> _entrar() async {
@@ -34,7 +47,12 @@ class _LoginViewState extends State<LoginView> {
       email: _email.text,
       senha: _senha.text,
     );
-    if (!mounted || !ok) return;
+    if (!mounted) return;
+    if (!ok) {
+      _senha.clear();
+      _senhaFocusNode.unfocus();
+      return;
+    }
     Navigator.pushNamedAndRemoveUntil(
       context,
       'meus_rateios',
@@ -88,6 +106,7 @@ class _LoginViewState extends State<LoginView> {
                       const SizedBox(height: 14),
                       TextField(
                         controller: _senha,
+                        focusNode: _senhaFocusNode,
                         obscureText: _ocultarSenha,
                         textInputAction: TextInputAction.done,
                         onSubmitted: (_) => _entrar(),
@@ -95,8 +114,7 @@ class _LoginViewState extends State<LoginView> {
                           labelText: 'Senha',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
-                            onPressed: () =>
-                                setState(() => _ocultarSenha = !_ocultarSenha),
+                            onPressed: _alternarVisibilidadeSenha,
                             icon: Icon(
                               _ocultarSenha
                                   ? Icons.visibility_outlined
