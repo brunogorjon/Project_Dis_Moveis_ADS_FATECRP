@@ -167,9 +167,7 @@ class RateioCalculator {
         }
       }
 
-      grupo = grupo
-          .where((c) => (saida[c.id] ?? 0) < c.capacidade)
-          .toList();
+      grupo = grupo.where((c) => (saida[c.id] ?? 0) < c.capacidade).toList();
 
       if (!progrediu && usado == 0) break;
     }
@@ -203,8 +201,7 @@ class RateioCalculator {
       final grupo = participantes
           .where(
             (p) =>
-                (inicio[p.id] ?? -1) >= 0 &&
-                (inicio[p.id] ?? -1) <= mesEvento,
+                (inicio[p.id] ?? -1) >= 0 && (inicio[p.id] ?? -1) <= mesEvento,
           )
           .toList();
       final cotas = distribuirCotas(rateio.valorTotalCentavos, grupo);
@@ -219,8 +216,7 @@ class RateioCalculator {
       for (final participante in grupo) {
         var congeladoAntes = 0;
         for (var i = 0; i < mesEvento; i++) {
-          congeladoAntes +=
-              plano[participante.id]?[rateio.meses[i].id] ?? 0;
+          congeladoAntes += plano[participante.id]?[rateio.meses[i].id] ?? 0;
         }
         final saldo = (cotas[participante.id] ?? 0) - congeladoAntes;
         saldos[participante.id] = saldo < 0 ? 0 : saldo;
@@ -246,9 +242,7 @@ class RateioCalculator {
               i <= fimPessoa;
         }).toList();
 
-        final obrigatorios = elegiveis
-            .where((p) => fim[p.id] == i)
-            .toList();
+        final obrigatorios = elegiveis.where((p) => fim[p.id] == i).toList();
 
         final necessidadeMes = mes.valorDevidoCentavos - caixaAcumulado;
         final devidoNecessario = necessidadeMes < 0 ? 0 : necessidadeMes;
@@ -264,7 +258,9 @@ class RateioCalculator {
         final alvoBase = devidoNecessario > totalObrigatorio
             ? devidoNecessario
             : totalObrigatorio;
-        final alvoColeta = alvoBase < capacidadeTotal ? alvoBase : capacidadeTotal;
+        final alvoColeta = alvoBase < capacidadeTotal
+            ? alvoBase
+            : capacidadeTotal;
 
         var planejadoTotal = 0;
 
@@ -352,8 +348,9 @@ class RateioCalculator {
       );
       planejadoPorParticipante[participante.id] = planejado;
       final creditoProjetado = planejado - cota;
-      creditosProjetados[participante.id] =
-          creditoProjetado > 0 ? creditoProjetado : 0;
+      creditosProjetados[participante.id] = creditoProjetado > 0
+          ? creditoProjetado
+          : 0;
     }
 
     final infoPorMes = <String, MesRateioInfo>{};

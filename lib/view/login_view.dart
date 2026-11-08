@@ -4,7 +4,6 @@ import '../controller/login_controller.dart';
 import '../theme/app_theme.dart';
 import '../widget/app_logo.dart';
 import '../widget/app_scope.dart';
-import '../widget/section_card.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -159,32 +158,6 @@ class _LoginViewState extends State<LoginView> {
                                 'cadastro_usuario',
                               ),
                         child: const Text('CRIAR CONTA'),
-                      ),
-                      const SizedBox(height: 22),
-                      SectionCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const <Widget>[
-                            Text(
-                              'Acesso de demonstração',
-                              style: TextStyle(fontWeight: FontWeight.w800),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'demo@rateio.app  •  senha: 123456',
-                              style: TextStyle(color: AppTheme.muted),
-                            ),
-                            SizedBox(height: 6),
-                            Text(
-                              'A autenticação está mockada, pensando em uma api de autenticação futura. Para acessar a aplicação, utilize o e-mail e senha acima.',
-                              style: TextStyle(
-                                color: AppTheme.muted,
-                                fontSize: 12,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ],
                   );

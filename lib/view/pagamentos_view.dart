@@ -43,7 +43,9 @@ class PagamentosView extends StatelessWidget {
             tooltip: 'Registrar pagamento',
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute<void>(builder: (_) => const RegistrarPagamentoView()),
+              MaterialPageRoute<void>(
+                builder: (_) => const RegistrarPagamentoView(),
+              ),
             ),
             icon: const Icon(Icons.add_card_outlined),
           ),
@@ -52,7 +54,9 @@ class PagamentosView extends StatelessWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute<void>(builder: (_) => const RegistrarPagamentoView()),
+          MaterialPageRoute<void>(
+            builder: (_) => const RegistrarPagamentoView(),
+          ),
         ),
         icon: const Icon(Icons.add),
         label: const Text('Pagamento'),
@@ -75,7 +79,9 @@ class PagamentosView extends StatelessWidget {
                 child: SummaryCard(
                   label: 'Restante',
                   value: formatarCentavos(restanteSeguro),
-                  valueColor: restanteSeguro > 0 ? AppTheme.warning : AppTheme.success,
+                  valueColor: restanteSeguro > 0
+                      ? AppTheme.warning
+                      : AppTheme.success,
                 ),
               ),
             ],
@@ -83,7 +89,9 @@ class PagamentosView extends StatelessWidget {
           const SizedBox(height: 22),
           Text(
             'Histórico',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
           if (pagamentos.isEmpty)
@@ -102,7 +110,9 @@ class PagamentosView extends StatelessWidget {
               final participante = rateio.participantes.firstWhere(
                 (p) => p.id == pagamento.participanteId,
               );
-              final mes = rateio.meses.firstWhere((m) => m.id == pagamento.mesId);
+              final mes = rateio.meses.firstWhere(
+                (m) => m.id == pagamento.mesId,
+              );
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: SectionCard(
@@ -122,17 +132,28 @@ class PagamentosView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Text(participante.nome, style: const TextStyle(fontWeight: FontWeight.w900)),
+                            Text(
+                              participante.nome,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                             const SizedBox(height: 3),
                             Text(
                               '${formatarMes(mes.data)} • ${_formatarData(pagamento.pagoEm)}',
-                              style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+                              style: const TextStyle(
+                                color: AppTheme.muted,
+                                fontSize: 12,
+                              ),
                             ),
                             if (pagamento.observacao.isNotEmpty) ...<Widget>[
                               const SizedBox(height: 3),
                               Text(
                                 pagamento.observacao,
-                                style: const TextStyle(color: AppTheme.muted, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppTheme.muted,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ],
@@ -143,12 +164,20 @@ class PagamentosView extends StatelessWidget {
                         children: <Widget>[
                           Text(
                             formatarCentavos(pagamento.valorCentavos),
-                            style: const TextStyle(color: AppTheme.success, fontWeight: FontWeight.w900),
+                            style: const TextStyle(
+                              color: AppTheme.success,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                           IconButton(
                             tooltip: 'Excluir pagamento',
-                            onPressed: () => _confirmarExclusao(context, pagamento.id),
-                            icon: const Icon(Icons.delete_outline, size: 20, color: AppTheme.danger),
+                            onPressed: () =>
+                                _confirmarExclusao(context, pagamento.id),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              size: 20,
+                              color: AppTheme.danger,
+                            ),
                           ),
                         ],
                       ),
@@ -162,20 +191,37 @@ class PagamentosView extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmarExclusao(BuildContext context, String pagamentoId) async {
+  Future<void> _confirmarExclusao(
+    BuildContext context,
+    String pagamentoId,
+  ) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Excluir pagamento?'),
-        content: const Text('O registro será removido, mas o planejamento das parcelas permanecerá inalterado.'),
+        content: const Text(
+          'O registro será removido, mas o planejamento das parcelas permanecerá inalterado.',
+        ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
         ],
       ),
     );
     if (confirmar != true || !context.mounted) return;
-    await AppScope.of(context).excluirPagamento(pagamentoId);
+    final erro = await AppScope.of(context).excluirPagamento(pagamentoId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(erro ?? 'Pagamento excluído com sucesso.'),
+      ),
+    );
   }
 
   String _formatarData(DateTime data) {

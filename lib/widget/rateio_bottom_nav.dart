@@ -4,9 +4,11 @@ class RateioBottomNav extends StatelessWidget {
   const RateioBottomNav({
     super.key,
     required this.currentIndex,
+    this.antesDeNavegar,
   });
 
   final int currentIndex;
+  final VoidCallback? antesDeNavegar;
 
   static const _routes = <String>[
     'rateio_dashboard',
@@ -21,6 +23,7 @@ class RateioBottomNav extends StatelessWidget {
       selectedIndex: currentIndex,
       onDestinationSelected: (index) {
         if (index == currentIndex) return;
+        antesDeNavegar?.call();
         Navigator.pushReplacementNamed(context, _routes[index]);
       },
       destinations: const <NavigationDestination>[

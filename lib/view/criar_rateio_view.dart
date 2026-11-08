@@ -52,7 +52,9 @@ class _CriarRateioViewState extends State<CriarRateioView> {
       return;
     }
     if (_fim.isBefore(_inicio)) {
-      setState(() => _erro = 'O mês da viagem não pode ser anterior ao início.');
+      setState(
+        () => _erro = 'O mês da viagem não pode ser anterior ao início.',
+      );
       return;
     }
     if (capacidade == null || capacidade <= 0) {
@@ -65,16 +67,29 @@ class _CriarRateioViewState extends State<CriarRateioView> {
       _salvando = true;
     });
 
-    await AppScope.of(context).criarRateio(
-      nome: nome,
-      valorTotalCentavos: valor,
-      mesInicial: _inicio,
-      mesFinal: _fim,
-      capacidade: capacidade,
-    );
+    try {
+      await AppScope.of(context).criarRateio(
+        nome: nome,
+        valorTotalCentavos: valor,
+        mesInicial: _inicio,
+        mesFinal: _fim,
+        capacidade: capacidade,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _salvando = false;
+        _erro =
+            'Não foi possível criar o rateio. Verifique sua conexão e tente novamente.';
+      });
+      return;
+    }
 
     if (!mounted) return;
     setState(() => _salvando = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Rateio criado com sucesso.')),
+    );
     Navigator.pushNamedAndRemoveUntil(
       context,
       'rateio_dashboard',
@@ -99,8 +114,8 @@ class _CriarRateioViewState extends State<CriarRateioView> {
                   Text(
                     'Planeje sua próxima viagem',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
@@ -120,7 +135,9 @@ class _CriarRateioViewState extends State<CriarRateioView> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: _valor,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Valor total',
                       hintText: '12000,00',
@@ -186,7 +203,10 @@ class _CriarRateioViewState extends State<CriarRateioView> {
                   ),
                   if (_erro != null) ...<Widget>[
                     const SizedBox(height: 12),
-                    Text(_erro!, style: const TextStyle(color: AppTheme.danger)),
+                    Text(
+                      _erro!,
+                      style: const TextStyle(color: AppTheme.danger),
+                    ),
                   ],
                   const SizedBox(height: 22),
                   ElevatedButton.icon(

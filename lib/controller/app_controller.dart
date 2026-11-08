@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../business/rateio_calculator.dart';
 import '../model/mes_rateio.dart';
@@ -7,6 +8,7 @@ import '../model/participante.dart';
 import '../model/rateio.dart';
 import '../model/usuario.dart';
 import '../service/auth_service.dart';
+import '../service/firestore_rateio_service.dart';
 import '../service/rateio_service.dart';
 import '../util/date_utils.dart';
 import '../util/id_utils.dart';
@@ -15,8 +17,8 @@ class AppController extends ChangeNotifier {
   AppController({
     required AuthService authService,
     required RateioService rateioService,
-  })  : _authService = authService,
-        _rateioService = rateioService;
+  }) : _authService = authService,
+       _rateioService = rateioService;
 
   final AuthService _authService;
   final RateioService _rateioService;
@@ -31,6 +33,38 @@ class AppController extends ChangeNotifier {
   List<Rateio> get rateios => List<Rateio>.unmodifiable(_rateios);
   bool get carregando => _carregando;
   bool get autenticado => _usuario != null;
+
+  Stream<QuerySnapshot<Map<String, dynamic>>>? acompanharRateios() {
+    final service = _rateioService;
+    final usuario = _usuario;
+    if (service is! FirestoreRateioService || usuario == null) return null;
+    return service.acompanhar(usuario.id);
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>>?
+  acompanharRateioSelecionado() {
+    final service = _rateioService;
+    final id = _rateioSelecionadoId;
+    if (service is! FirestoreRateioService || id == null) return null;
+    return service.acompanharDocumento(id);
+  }
+
+  void selecionarRateioRemoto(
+    DocumentSnapshot<Map<String, dynamic>> documento,
+  ) {
+    final service = _rateioService;
+    if (service is! FirestoreRateioService) return;
+    final rateio = service.selecionarDocumento(documento);
+    if (rateio.ownerId != _usuario?.id) return;
+    final index = _rateios.indexWhere((item) => item.id == rateio.id);
+    if (index < 0) {
+      _rateios.add(rateio);
+    } else {
+      _rateios[index] = rateio;
+    }
+    _rateioSelecionadoId = rateio.id;
+    notifyListeners();
+  }
 
   Rateio? get rateioSelecionado {
     if (_rateioSelecionadoId == null) return null;
@@ -125,6 +159,10 @@ class AppController extends ChangeNotifier {
 
   Future<void> sair() async {
     await _authService.sair();
+    limparSessao();
+  }
+
+  void limparSessao() {
     _usuario = null;
     _rateios = <Rateio>[];
     _rateioSelecionadoId = null;
@@ -141,6 +179,11 @@ class AppController extends ChangeNotifier {
       _rateioSelecionadoId = null;
     }
     notifyListeners();
+  }
+
+  Future<void> restaurarUsuario(Usuario usuario) async {
+    _usuario = usuario;
+    await _carregarRateios();
   }
 
   void selecionarRateio(String rateioId) {
@@ -184,9 +227,10 @@ class AppController extends ChangeNotifier {
       ],
     );
 
+    await _rateioService.salvar(rateio);
+    if (_usuario?.id != usuario.id) throw StateError('Sessão alterada.');
     _rateios.add(rateio);
     _rateioSelecionadoId = rateio.id;
-    await _rateioService.salvar(rateio);
     notifyListeners();
     return rateio;
   }
@@ -196,7 +240,7 @@ class AppController extends ChangeNotifier {
     required String mesInicialId,
     required String mesFinalId,
   }) async {
-    final rateio = rateioSelecionado;
+    final rateio = rateioSelecionado?.deepCopy();
     if (rateio == null) return 'Nenhum rateio selecionado.';
 
     final ativos = rateio.participantes.where((p) => p.ativo).length;
@@ -215,8 +259,7 @@ class AppController extends ChangeNotifier {
         mesFinalId: mesFinalId,
       ),
     );
-    await _salvarRateio(rateio);
-    return null;
+    return _salvarRateio(rateio);
   }
 
   Future<String?> atualizarParticipante({
@@ -225,7 +268,7 @@ class AppController extends ChangeNotifier {
     required String mesInicialId,
     required String mesFinalId,
   }) async {
-    final rateio = rateioSelecionado;
+    final rateio = rateioSelecionado?.deepCopy();
     if (rateio == null) return 'Nenhum rateio selecionado.';
     if (!_periodoParticipanteValido(rateio, mesInicialId, mesFinalId)) {
       return 'O último mês não pode ser anterior ao mês inicial.';
@@ -243,8 +286,7 @@ class AppController extends ChangeNotifier {
     participante.nome = nome.trim();
     participante.mesInicialId = mesInicialId;
     participante.mesFinalId = mesFinalId;
-    await _salvarRateio(rateio);
-    return null;
+    return _salvarRateio(rateio);
   }
 
   bool participanteTemPagamentos(String participanteId) {
@@ -254,14 +296,13 @@ class AppController extends ChangeNotifier {
   }
 
   Future<String?> excluirParticipante(String participanteId) async {
-    final rateio = rateioSelecionado;
+    final rateio = rateioSelecionado?.deepCopy();
     if (rateio == null) return 'Nenhum rateio selecionado.';
     if (participanteTemPagamentos(participanteId)) {
       return 'Não é possível excluir uma pessoa que já possui pagamentos confirmados.';
     }
     rateio.participantes.removeWhere((p) => p.id == participanteId);
-    await _salvarRateio(rateio);
-    return null;
+    return _salvarRateio(rateio);
   }
 
   Future<String?> registrarPagamento({
@@ -270,7 +311,7 @@ class AppController extends ChangeNotifier {
     required int valorCentavos,
     String observacao = '',
   }) async {
-    final rateio = rateioSelecionado;
+    final rateio = rateioSelecionado?.deepCopy();
     if (rateio == null) return 'Nenhum rateio selecionado.';
     if (valorCentavos <= 0) return 'Informe um valor maior que zero.';
     if (!rateio.participantes.any((p) => p.id == participanteId)) {
@@ -290,15 +331,14 @@ class AppController extends ChangeNotifier {
         observacao: observacao.trim(),
       ),
     );
-    await _salvarRateio(rateio);
-    return null;
+    return _salvarRateio(rateio);
   }
 
-  Future<void> excluirPagamento(String pagamentoId) async {
-    final rateio = rateioSelecionado;
-    if (rateio == null) return;
+  Future<String?> excluirPagamento(String pagamentoId) async {
+    final rateio = rateioSelecionado?.deepCopy();
+    if (rateio == null) return 'Nenhum rateio selecionado.';
     rateio.pagamentos.removeWhere((p) => p.id == pagamentoId);
-    await _salvarRateio(rateio);
+    return _salvarRateio(rateio);
   }
 
   Future<String?> salvarConfiguracoesRateio({
@@ -308,7 +348,7 @@ class AppController extends ChangeNotifier {
     required Map<String, int> valoresPorMes,
     required bool concluido,
   }) async {
-    final rateio = rateioSelecionado;
+    final rateio = rateioSelecionado?.deepCopy();
     if (rateio == null) return 'Nenhum rateio selecionado.';
     final ativos = rateio.participantes.where((p) => p.ativo).length;
     if (capacidade < ativos) {
@@ -324,10 +364,10 @@ class AppController extends ChangeNotifier {
     rateio.capacidade = capacidade;
     rateio.concluido = concluido;
     for (final mes in rateio.meses) {
-      mes.valorDevidoCentavos = valoresPorMes[mes.id] ?? mes.valorDevidoCentavos;
+      mes.valorDevidoCentavos =
+          valoresPorMes[mes.id] ?? mes.valorDevidoCentavos;
     }
-    await _salvarRateio(rateio);
-    return null;
+    return _salvarRateio(rateio);
   }
 
   Future<void> excluirRateioSelecionado() async {
@@ -359,9 +399,19 @@ class AppController extends ChangeNotifier {
     return inicio >= 0 && fim >= 0 && inicio <= fim;
   }
 
-  Future<void> _salvarRateio(Rateio rateio) async {
-    await _rateioService.salvar(rateio);
-    notifyListeners();
+  Future<String?> _salvarRateio(Rateio rateio) async {
+    try {
+      await _rateioService.salvar(rateio);
+      if (_usuario?.id != rateio.ownerId) return 'A sessão foi alterada.';
+      final index = _rateios.indexWhere((item) => item.id == rateio.id);
+      if (index >= 0) _rateios[index] = rateio;
+      notifyListeners();
+      return null;
+    } on RateioConflitoException {
+      return 'Este rateio foi alterado em outra sessão. Recarregue a página antes de tentar novamente.';
+    } catch (_) {
+      return 'Não foi possível salvar. Verifique sua conexão e tente novamente.';
+    }
   }
 
   void _setCarregando(bool value) {
@@ -370,4 +420,3 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 }
-

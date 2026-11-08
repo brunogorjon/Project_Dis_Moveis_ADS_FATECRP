@@ -4,16 +4,13 @@ Aplicativo Flutter/Dart adaptado do protótipo web `rateio_apartamento-main` e e
 
 ## Estado atual
 
-Nesta etapa o projeto está focado em **front-end, navegação, ChangeNotifier e regras de negócio**.
+Na versão Web, autenticação e perfis usam Firebase Authentication e Cloud Firestore. Os rateios também são armazenados no Firestore, com acesso restrito por usuário. Em outras plataformas, os serviços continuam simulados e os dados são temporários.
 
-A camada de autenticação já está isolada por uma interface (`AuthService`). Hoje ela usa `MockAuthService`; depois pode ser trocada por `FirebaseAuthService` sem reescrever as telas.
+### Executar a versão Web
 
-### Acesso de demonstração
+Com Flutter instalado, execute `flutter pub get` e `flutter run -d chrome`. É necessário ter acesso ao projeto Firebase configurado em `lib/firebase_options.dart`, com autenticação por e-mail/senha e Firestore habilitados e as regras de `firestore.rules` publicadas. Crie uma conta pela tela de cadastro.
 
-- E-mail: `demo@rateio.app`
-- Senha: `123456`
-
-Também é possível cadastrar uma nova conta durante a execução. Como os serviços atuais são mockados em memória, os dados são reiniciados ao fechar completamente o aplicativo.
+Para validar: `flutter test` e `flutter analyze`. Para compilar: `flutter build web`.
 
 ## Fluxo do aplicativo
 
@@ -82,7 +79,7 @@ As telas de autenticação e perfil também possuem controllers baseados em `Cha
 
 O `AppScope` é um `InheritedNotifier<AppController>` nativo do Flutter, portanto não é necessário adicionar Provider nesta etapa.
 
-## Preparação para Firebase
+## Integração Firebase
 
 A estrutura atual é:
 
@@ -96,9 +93,7 @@ Service
 Mock atual / Firebase futuramente
 ```
 
-Para integrar o Firebase posteriormente, a ideia é criar uma implementação de `AuthService` usando `FirebaseAuth`, configurar o projeto com as credenciais e trocar a instância criada em `main.dart`.
-
-Os dados dos rateios também estão abstraídos por `RateioService`, permitindo migrar o mock para Firestore/Realtime Database posteriormente sem mover a regra de cálculo para o backend.
+Na Web, `FirebaseAuthService` e `FirestoreRateioService` implementam essas interfaces. A listagem, o dashboard do rateio e a visualização dos dados salvos do perfil usam streams. Edições abertas mantêm sua revisão original para detectar conflitos com alterações remotas.
 
 ## Estrutura principal
 

@@ -1,0 +1,24 @@
+{
+  "firestore": { "rules": "firestore.rules" },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "@(index.html|flutter_bootstrap.js|main.dart.js|flutter_service_worker.js)",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "project-dip-moveis-ratapp",
+          "configurations": { "web": "1:521468899748:web:da05ab88a5619ba1dbd131" }
+        }
+      }
+    }
+  }
+}

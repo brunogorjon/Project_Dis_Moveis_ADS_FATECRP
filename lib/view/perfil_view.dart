@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../controller/perfil_controller.dart';
@@ -15,6 +17,15 @@ class _PerfilViewState extends State<PerfilView> {
   final _controller = PerfilController();
   TextEditingController? _nome;
   TextEditingController? _telefone;
+  Stream<DocumentSnapshot<Map<String, dynamic>>>? _perfilStream;
+  String? _perfilUid;
+
+  void _conectarPerfil(String uid) {
+    _perfilStream = FirebaseFirestore.instance
+        .collection('usuarios')
+        .doc(uid)
+        .snapshots();
+  }
 
   @override
   void didChangeDependencies() {
@@ -23,6 +34,10 @@ class _PerfilViewState extends State<PerfilView> {
     final usuario = AppScope.of(context).usuario;
     _nome = TextEditingController(text: usuario?.nome ?? '');
     _telefone = TextEditingController(text: usuario?.telefone ?? '');
+    if (kIsWeb && usuario != null) {
+      _perfilUid = usuario.id;
+      _conectarPerfil(usuario.id);
+    }
   }
 
   @override
@@ -66,10 +81,58 @@ class _PerfilViewState extends State<PerfilView> {
                         child: CircleAvatar(
                           radius: 44,
                           backgroundColor: AppTheme.primaryStrong,
-                          child: Icon(Icons.person, color: Colors.white, size: 42),
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 42,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 26),
+                      if (_perfilStream != null) ...[
+                        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                          stream: _perfilStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.hasError) {
+                              return Column(
+                                children: [
+                                  const Text(
+                                    'Não foi possível carregar o perfil atualizado.',
+                                  ),
+                                  TextButton(
+                                    onPressed: () => setState(
+                                      () => _conectarPerfil(_perfilUid!),
+                                    ),
+                                    child: const Text('Tentar novamente'),
+                                  ),
+                                ],
+                              );
+                            }
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final dados = snapshot.data!.data();
+                            if (dados == null) {
+                              return const Text('Perfil não encontrado.');
+                            }
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Nome salvo: ${dados['nome'] ?? ''}'),
+                                Text(
+                                  'Telefone salvo: ${dados['telefone'] ?? ''}',
+                                ),
+                                const Text(
+                                  'Os campos abaixo não são alterados automaticamente durante a edição.',
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       TextField(
                         controller: _nome,
                         textCapitalization: TextCapitalization.words,
@@ -86,7 +149,8 @@ class _PerfilViewState extends State<PerfilView> {
                         decoration: const InputDecoration(
                           labelText: 'E-mail',
                           prefixIcon: Icon(Icons.email_outlined),
-                          helperText: 'O e-mail é utilizado na autenticação e não pode ser alterado aqui.',
+                          helperText:
+                              'O e-mail é utilizado na autenticação e não pode ser alterado aqui.',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -100,7 +164,10 @@ class _PerfilViewState extends State<PerfilView> {
                       ),
                       if (_controller.erro != null) ...<Widget>[
                         const SizedBox(height: 12),
-                        Text(_controller.erro!, style: const TextStyle(color: AppTheme.danger)),
+                        Text(
+                          _controller.erro!,
+                          style: const TextStyle(color: AppTheme.danger),
+                        ),
                       ],
                       const SizedBox(height: 22),
                       ElevatedButton(

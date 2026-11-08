@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../model/rateio.dart';
+import '../service/rateio_firestore_mapper.dart';
 import '../theme/app_theme.dart';
 import '../util/currency_utils.dart';
 import '../util/date_utils.dart';
@@ -10,16 +13,91 @@ import '../widget/rateio_bottom_nav.dart';
 import '../widget/section_card.dart';
 import '../widget/summary_card.dart';
 
-class RateioDashboardView extends StatelessWidget {
+class RateioDashboardView extends StatefulWidget {
   const RateioDashboardView({super.key});
+
+  @override
+  State<RateioDashboardView> createState() => _RateioDashboardViewState();
+}
+
+class _RateioDashboardViewState extends State<RateioDashboardView> {
+  Stream<DocumentSnapshot<Map<String, dynamic>>>? _stream;
+  String? _rateioId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final app = AppScope.of(context);
+    final id = app.rateioSelecionado?.id;
+    if (_rateioId != id) {
+      _rateioId = id;
+      _stream = app.acompanharRateioSelecionado();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final app = AppScope.of(context);
-    final rateio = app.rateioSelecionado;
-    final calculo = app.calculoSelecionado;
+    final stream = _stream;
+    if (stream == null) return _conteudo(context, app.rateioSelecionado);
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: stream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Rateio')),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Não foi possível atualizar o rateio.'),
+                  TextButton(
+                    onPressed: () => setState(
+                      () => _stream = app.acompanharRateioSelecionado(),
+                    ),
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final documento = snapshot.data!;
+        final dados = documento.data();
+        if (dados == null) return _conteudo(context, null);
+        try {
+          final rateio = const RateioFirestoreMapper().fromMap(
+            documento.id,
+            dados,
+          );
+          return _conteudo(
+            context,
+            rateio,
+            antesDeNavegar: () => app.selecionarRateioRemoto(documento),
+          );
+        } catch (_) {
+          return const Scaffold(
+            body: Center(
+              child: Text('Não foi possível interpretar os dados do rateio.'),
+            ),
+          );
+        }
+      },
+    );
+  }
 
-    if (rateio == null || calculo == null) {
+  Widget _conteudo(
+    BuildContext context,
+    Rateio? rateio, {
+    VoidCallback? antesDeNavegar,
+  }) {
+    final app = AppScope.of(context);
+    if (rateio == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Rateio')),
         body: const EmptyState(
@@ -30,13 +108,19 @@ class RateioDashboardView extends StatelessWidget {
       );
     }
 
+    final calculo = app.calcular(rateio);
+    void abrir(String rota) {
+      antesDeNavegar?.call();
+      Navigator.pushNamed(context, rota);
+    }
+
     final diferenca = rateio.valorTotalCentavos - calculo.totalConfirmado;
     final restante = diferenca > 0 ? diferenca : 0;
     final progresso = rateio.valorTotalCentavos <= 0
         ? 0.0
         : (calculo.totalConfirmado / rateio.valorTotalCentavos)
-            .clamp(0.0, 1.0)
-            .toDouble();
+              .clamp(0.0, 1.0)
+              .toDouble();
 
     final proximoMes = rateio.meses.where((mes) {
       final info = calculo.infoPorMes[mes.id];
@@ -50,13 +134,16 @@ class RateioDashboardView extends StatelessWidget {
         actions: <Widget>[
           IconButton(
             tooltip: 'Configurações do rateio',
-            onPressed: () => Navigator.pushNamed(context, 'configuracoes_rateio'),
+            onPressed: () => abrir('configuracoes_rateio'),
             icon: const Icon(Icons.settings_outlined),
           ),
           const SizedBox(width: 6),
         ],
       ),
-      bottomNavigationBar: const RateioBottomNav(currentIndex: 0),
+      bottomNavigationBar: RateioBottomNav(
+        currentIndex: 0,
+        antesDeNavegar: antesDeNavegar,
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
         children: <Widget>[
@@ -68,7 +155,9 @@ class RateioDashboardView extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final width = constraints.maxWidth;
-              final itemWidth = width >= 700 ? (width - 24) / 3 : (width - 12) / 2;
+              final itemWidth = width >= 700
+                  ? (width - 24) / 3
+                  : (width - 12) / 2;
               return Wrap(
                 spacing: 12,
                 runSpacing: 12,
@@ -96,7 +185,9 @@ class RateioDashboardView extends StatelessWidget {
                       label: 'Restante',
                       value: formatarCentavos(restante),
                       icon: Icons.timelapse,
-                      valueColor: restante > 0 ? AppTheme.warning : AppTheme.success,
+                      valueColor: restante > 0
+                          ? AppTheme.warning
+                          : AppTheme.success,
                     ),
                   ),
                 ],
@@ -111,8 +202,17 @@ class RateioDashboardView extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    const Text('Progresso do rateio', style: TextStyle(fontWeight: FontWeight.w800)),
-                    Text('${(progresso * 100).round()}%', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800)),
+                    const Text(
+                      'Progresso do rateio',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      '${(progresso * 100).round()}%',
+                      style: const TextStyle(
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -144,16 +244,28 @@ class RateioDashboardView extends StatelessWidget {
                       color: const Color(0xFF10264A),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.event_note_outlined, color: AppTheme.primary),
+                    child: const Icon(
+                      Icons.event_note_outlined,
+                      color: AppTheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        const Text('Próximo mês com pendência', style: TextStyle(color: AppTheme.muted, fontSize: 12)),
+                        const Text(
+                          'Próximo mês com pendência',
+                          style: TextStyle(color: AppTheme.muted, fontSize: 12),
+                        ),
                         const SizedBox(height: 3),
-                        Text(formatarMes(proximoMes.data), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+                        Text(
+                          formatarMes(proximoMes.data),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 17,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           'Pendente: ${formatarCentavos(calculo.infoPorMes[proximoMes.id]?.pendente ?? 0)}',
@@ -173,16 +285,25 @@ class RateioDashboardView extends StatelessWidget {
                 children: <Widget>[
                   const Row(
                     children: <Widget>[
-                      Icon(Icons.warning_amber_rounded, color: AppTheme.warning),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: AppTheme.warning,
+                      ),
                       SizedBox(width: 8),
-                      Text('Atenção', style: TextStyle(fontWeight: FontWeight.w900)),
+                      Text(
+                        'Atenção',
+                        style: TextStyle(fontWeight: FontWeight.w900),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   ...calculo.avisos.map(
                     (aviso) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: Text(aviso, style: const TextStyle(color: AppTheme.warning)),
+                      child: Text(
+                        aviso,
+                        style: const TextStyle(color: AppTheme.warning),
+                      ),
                     ),
                   ),
                 ],
@@ -192,7 +313,9 @@ class RateioDashboardView extends StatelessWidget {
           const SizedBox(height: 22),
           Text(
             'Acessos rápidos',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
           GridView.count(
@@ -206,22 +329,22 @@ class RateioDashboardView extends StatelessWidget {
               _QuickAction(
                 icon: Icons.groups_outlined,
                 label: 'Participantes',
-                onTap: () => Navigator.pushNamed(context, 'participantes'),
+                onTap: () => abrir('participantes'),
               ),
               _QuickAction(
                 icon: Icons.payments_outlined,
                 label: 'Pagamentos',
-                onTap: () => Navigator.pushNamed(context, 'pagamentos'),
+                onTap: () => abrir('pagamentos'),
               ),
               _QuickAction(
                 icon: Icons.calendar_month_outlined,
                 label: 'Rateio mensal',
-                onTap: () => Navigator.pushNamed(context, 'rateio_mensal'),
+                onTap: () => abrir('rateio_mensal'),
               ),
               _QuickAction(
                 icon: Icons.settings_outlined,
                 label: 'Configurações',
-                onTap: () => Navigator.pushNamed(context, 'configuracoes_rateio'),
+                onTap: () => abrir('configuracoes_rateio'),
               ),
             ],
           ),
@@ -251,7 +374,11 @@ class _QuickAction extends StatelessWidget {
         children: <Widget>[
           Icon(icon, color: AppTheme.primary, size: 28),
           const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
         ],
       ),
     );

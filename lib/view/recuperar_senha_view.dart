@@ -59,7 +59,7 @@ class _RecuperarSenhaViewState extends State<RecuperarSenhaView> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Informe o e-mail cadastrado. Na integração final com Firebase, as instruções de redefinição serão enviadas para ele.',
+                        'Informe o e-mail cadastrado para solicitar instruções de redefinição de senha.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppTheme.muted, height: 1.4),
                       ),
@@ -93,7 +93,7 @@ class _RecuperarSenhaViewState extends State<RecuperarSenhaView> {
                               SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Solicitação validada. Será enviado um e-mail com instruções para redefinir sua senha.',
+                                  'Se houver uma conta para esse e-mail, você receberá instruções para redefinir sua senha.',
                                   style: TextStyle(color: AppTheme.success),
                                 ),
                               ),

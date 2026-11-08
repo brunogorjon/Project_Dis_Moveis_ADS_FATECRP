@@ -11,14 +11,16 @@ class ConfiguracoesRateioView extends StatefulWidget {
   const ConfiguracoesRateioView({super.key});
 
   @override
-  State<ConfiguracoesRateioView> createState() => _ConfiguracoesRateioViewState();
+  State<ConfiguracoesRateioView> createState() =>
+      _ConfiguracoesRateioViewState();
 }
 
 class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
   final _nome = TextEditingController();
   final _total = TextEditingController();
   final _capacidade = TextEditingController();
-  final Map<String, TextEditingController> _valoresMes = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _valoresMes =
+      <String, TextEditingController>{};
   bool _inicializado = false;
   bool _concluido = false;
   bool _salvando = false;
@@ -61,10 +63,14 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
     final rateio = AppScope.of(context).rateioSelecionado;
     final total = converterParaCentavos(_total.text);
     if (rateio == null || total == null || total <= 0) {
-      setState(() => _erro = 'Informe um valor total válido antes de redistribuir.');
+      setState(
+        () => _erro = 'Informe um valor total válido antes de redistribuir.',
+      );
       return;
     }
-    final valores = AppScope.of(context).distribuirValor(total, rateio.meses.length);
+    final valores = AppScope.of(
+      context,
+    ).distribuirValor(total, rateio.meses.length);
     for (var i = 0; i < rateio.meses.length; i++) {
       _valoresMes[rateio.meses[i].id]?.text = centavosParaCampo(valores[i]);
     }
@@ -130,24 +136,47 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Excluir rateio?'),
-        content: const Text('Participantes e pagamentos deste planejamento serão removidos. Esta ação não pode ser desfeita nesta versão local.'),
+        content: const Text(
+          'Participantes e pagamentos deste planejamento serão removidos. Esta ação não pode ser desfeita nesta versão local.',
+        ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
         ],
       ),
     );
     if (confirmar != true || !mounted) return;
-    await AppScope.of(context).excluirRateioSelecionado();
+    try {
+      await AppScope.of(context).excluirRateioSelecionado();
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _erro =
+            'Não foi possível excluir. Verifique a conexão ou recarregue a página.',
+      );
+      return;
+    }
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, 'meus_rateios', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      'meus_rateios',
+      (route) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final rateio = AppScope.of(context).rateioSelecionado;
     if (rateio == null) {
-      return const Scaffold(body: Center(child: Text('Nenhum rateio selecionado.')));
+      return const Scaffold(
+        body: Center(child: Text('Nenhum rateio selecionado.')),
+      );
     }
 
     final somaMensal = rateio.meses.fold<int>(0, (total, mes) {
@@ -171,7 +200,9 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
             const SizedBox(height: 12),
             TextField(
               controller: _total,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Valor total',
                 prefixText: 'R\$ ',
@@ -191,8 +222,13 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
               contentPadding: EdgeInsets.zero,
               value: _concluido,
               onChanged: (value) => setState(() => _concluido = value),
-              title: const Text('Rateio concluído', style: TextStyle(fontWeight: FontWeight.w800)),
-              subtitle: const Text('Marque quando o planejamento já estiver encerrado.'),
+              title: const Text(
+                'Rateio concluído',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              subtitle: const Text(
+                'Marque quando o planejamento já estiver encerrado.',
+              ),
             ),
             const SizedBox(height: 18),
             Row(
@@ -200,7 +236,9 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
                 Expanded(
                   child: Text(
                     'Compromissos mensais',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 TextButton.icon(
@@ -221,7 +259,9 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: TextField(
                   controller: _valoresMes[mes.id],
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   onChanged: (_) => setState(() {}),
                   decoration: InputDecoration(
                     labelText: formatarMes(mes.data),
@@ -234,12 +274,17 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  const Text('Soma mensal', style: TextStyle(fontWeight: FontWeight.w800)),
+                  const Text(
+                    'Soma mensal',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   Text(
                     formatarCentavos(somaMensal),
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      color: somaMensal == (converterParaCentavos(_total.text) ?? -1)
+                      color:
+                          somaMensal ==
+                              (converterParaCentavos(_total.text) ?? -1)
                           ? AppTheme.success
                           : AppTheme.warning,
                     ),
@@ -260,7 +305,10 @@ class _ConfiguracoesRateioViewState extends State<ConfiguracoesRateioView> {
             OutlinedButton.icon(
               onPressed: _excluirRateio,
               icon: const Icon(Icons.delete_outline, color: AppTheme.danger),
-              label: const Text('EXCLUIR RATEIO', style: TextStyle(color: AppTheme.danger)),
+              label: const Text(
+                'EXCLUIR RATEIO',
+                style: TextStyle(color: AppTheme.danger),
+              ),
             ),
           ],
         ),
